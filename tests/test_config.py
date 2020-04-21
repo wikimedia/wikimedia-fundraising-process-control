@@ -1,5 +1,5 @@
-import nose
 import os
+import pytest
 
 from processcontrol import config
 
@@ -19,24 +19,24 @@ def load_config(filename, global_configuration=None):
     return configuration
 
 
-@nose.tools.raises(AssertionError)
 def test_missing_fields():
-    load_config("missing_fields.yaml")
+    with pytest.raises(AssertionError):
+        load_config("missing_fields.yaml")
 
 
-@nose.tools.raises(AssertionError)
 def test_schedule_atsign():
-    load_config("schedule_atsign.yaml")
+    with pytest.raises(AssertionError):
+        load_config("schedule_atsign.yaml")
 
 
-@nose.tools.raises(AssertionError)
 def test_schedule_assign():
-    load_config("schedule_assign.yaml")
+    with pytest.raises(AssertionError):
+        load_config("schedule_assign.yaml")
 
 
-@nose.tools.raises(AssertionError)
 def test_schedule_invalid():
-    load_config("schedule_invalid.yaml")
+    with pytest.raises(AssertionError):
+        load_config("schedule_invalid.yaml")
 
 
 def test_schedule_good():

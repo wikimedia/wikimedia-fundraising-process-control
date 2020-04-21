@@ -1,8 +1,8 @@
 import glob
+import logging
 import mock
-import nose
 import os
-import testfixtures
+import pytest
 
 from processcontrol import runner
 from processcontrol import job_spec
@@ -46,38 +46,34 @@ def get_output_lines(slug):
 
 
 @mock.patch("smtplib.SMTP")
-@testfixtures.log_capture()
 def test_return_code(MockSmtp, caplog):
     run_job("return_code")
 
-    loglines = caplog.actual()
-    assert ("root", "ERROR", "False job failed with code 1") in loglines
+    assert ("root", logging.ERROR, "False job failed with code 1") in caplog.record_tuples
 
     MockSmtp().sendmail.assert_called_once()
 
 
 # Must finish in less than two seconds, i.e. must have timed out.
-@nose.tools.timed(2)
+@pytest.mark.timeout(2)
 @mock.patch("smtplib.SMTP")
-@testfixtures.log_capture()
 def test_timeout(MockSmtp, caplog):
     run_job("timeout")
 
-    loglines = caplog.actual()
-    assert ("root", "ERROR", "Timing out job timed out after 0.005 minutes") in loglines
+    assert ("root", logging.ERROR, "Timing out job timed out after 0.005 minutes") in \
+        caplog.record_tuples
 
     MockSmtp().sendmail.assert_called_once()
 
 
 @mock.patch("smtplib.SMTP")
-@testfixtures.log_capture()
 def test_stderr(MockSmtp, caplog):
     """Test that stderr is being routed to the log."""
     run_job("errors")
 
-    loglines = list(caplog.actual())
     # FIXME: Use an included script, 'cos even posix output may change some day.
-    assert ("errors", "ERROR", "grep: Invalid regular expression") in loglines
+    assert ("errors", logging.ERROR, "grep: Invalid regular expression") in \
+        caplog.record_tuples
     # TODO: Should we go out of our way to log the non-zero return code as well?
 
     lines = get_output_lines("errors")
@@ -91,7 +87,8 @@ def test_store_output():
 
     lines = get_output_lines("which_out")
 
-    assert "INFO\t/bin/bash" in lines
+    assert "INFO\t/bin/bash" in lines \
+        or "INFO\t/usr/bin/bash" in lines
 
 
 def test_slow_start():
@@ -122,8 +119,8 @@ def test_environment():
     assert "INFO\tMYENV=pre-existing" in lines
 
 
-@nose.tools.raises(AssertionError)
 def test_symlink():
     '''Prevent running any job config outside the job_directory.'''
 
-    run_job("symlink")
+    with pytest.raises(AssertionError):
+        run_job("symlink")

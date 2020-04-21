@@ -1,4 +1,4 @@
 mock
-nose
-nose-cov
-testfixtures
+pytest
+pytest-cov
+pytest-timeout

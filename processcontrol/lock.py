@@ -1,7 +1,7 @@
 '''
 Lockfile using a temporary file and the process id.
 
-Self-corrects stale locks unless "failopen" is True.
+Self-corrects stale locks.
 '''
 import os
 
@@ -17,8 +17,7 @@ def path_for_job(job_name):
     return filename
 
 
-# TODO: Decide whether we want to failopen?
-def begin(failopen=False, slug=None):
+def begin(slug=None):
     filename = path_for_job(slug)
 
     if os.path.exists(filename):
@@ -40,13 +39,8 @@ def begin(failopen=False, slug=None):
                     LockError.LOCK_EXISTS
                 )
             except OSError:
-                if failopen:
-                    raise LockError(
-                        "Aborting until stale lockfile is investigated: {path}".format(path=filename),
-                        LockError.STALE_LOCKFILE
-                    )
-                config.log.error("Lockfile is stale.")
-        config.log.error("Removing old lockfile.")
+                config.log.error("Lockfile is stale, process (%d) is not running.", pid)
+        config.log.error("Removing old lockfile \"%s\".", filename)
         os.unlink(filename)
 
     with open(filename, "w") as f:

@@ -1,3 +1,4 @@
+import logging
 import os.path
 
 from processcontrol import config
@@ -41,7 +42,7 @@ def test_live_lock():
     assert raised
 
 
-def test_stale_lock():
+def test_stale_lock(caplog):
     tag = "stale"
     lock.begin(slug=tag)
 
@@ -53,6 +54,9 @@ def test_stale_lock():
 
     lock.begin(slug=tag)
 
+    assert ("root", logging.ERROR, "Lockfile is stale, process (-1) is not running.") in caplog.record_tuples
+    assert ("root", logging.ERROR, "Removing old lockfile \"{}\".".format(lock.lockfile)) in caplog.record_tuples
+
     # Check that we overwrote the contents with the current PID.
     assert lock.lockfile
     f = open(lock.lockfile, "r")
@@ -61,26 +65,6 @@ def test_stale_lock():
     assert pid == os.getpid()
 
     lock.end()
-
-
-def test_stale_lock_failopen():
-    raised = False
-    tag = "stale-open"
-    lock.begin(slug=tag)
-
-    # Make the lockfile stale by changing the process ID.
-    assert lock.lockfile
-    f = open(lock.lockfile, "w")
-    f.write("-1")
-    f.close()
-
-    try:
-        lock.begin(slug=tag, failopen=True)
-    except lock.LockError as e:
-        assert e.code == lock.LockError.STALE_LOCKFILE
-        raised = True
-
-    assert raised
 
 
 def test_invalid_lock():

@@ -43,9 +43,15 @@ def begin(slug=None):
         config.log.error("Removing old lockfile \"%s\".", filename)
         os.unlink(filename)
 
-    with open(filename, "w") as f:
-        config.log.debug("Writing lockfile.")
-        f.write(str(os.getpid()))
+    try:
+        with open(filename, "x") as f:
+            config.log.debug("Writing lockfile.")
+            f.write(str(os.getpid()))
+    except FileExistsError:
+        raise LockError(
+            "Interrupted by a simultaneous lock before we could acquire {path}".format(path=filename),
+            LockError.LOCK_EXISTS
+        )
 
     global lockfile
     lockfile = filename

@@ -1,0 +1,5 @@
+---
+command: "/bin/date"
+description: "Script to output the current date and time"
+name: "Example Job"
+schedule: "*/5 * * * *"

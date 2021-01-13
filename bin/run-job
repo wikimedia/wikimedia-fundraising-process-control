@@ -1,11 +1,17 @@
 #!/usr/bin/python3
 
 import argparse
+import os
+import signal
 import yaml
 
 from processcontrol import runner
 from processcontrol import job_spec
 from processcontrol import job_state
+
+
+def sigterm_handler(signum, frame):
+    runner.terminate()
 
 
 def list_jobs(verbose=True, only_running=False):
@@ -44,14 +50,13 @@ def list_jobs(verbose=True, only_running=False):
 
 
 if __name__ == "__main__":
-    # TODO: Change the function name or move responsibilities beyond "run" to a
-    # new script.
+    # TODO: Rename script and implement --disable-group, --enable-group
     parser = argparse.ArgumentParser(description="Run or query `process-control` jobs.")
     job_group = parser.add_mutually_exclusive_group()
-    job_group.add_argument("job", nargs="?", help="Run a given job.", type=str)
-    job_group.add_argument("-j", "--job", dest="job_name", help="Run a given job.", type=str)
-    parser.add_argument("-l", "--list-jobs", help="Print a list of available jobs.", action='store_true')
-    parser.add_argument("-s", "--status", help="Print status of all jobs.", action='store_true')
+    job_group.add_argument("-j", "--job", dest="start_job", help="Run a given job.", type=str, metavar="JOB_NAME")
+    job_group.add_argument("-k", "--kill-job", help="Kill a given job.", metavar="JOB_NAME", type=str)
+    job_group.add_argument("-l", "--list-jobs", help="Print a list of available jobs.", action='store_true')
+    job_group.add_argument("-s", "--status", help="Print status of all jobs.", action='store_true')
     parser.add_argument("-r", "--only-running", help="Only list or print status of running jobs.", action='store_true')
     parser.add_argument(
         "-w",
@@ -60,18 +65,34 @@ if __name__ == "__main__":
         help="Slow start a job, if a slow-start configuration has been supplied.",
         action="store_true"
     )
-    # TODO: --kill-job, --disable-group, --enable-group
     args = parser.parse_args()
 
-    job_name = None
-    if args.job_name is not None:
-        job_name = args.job_name
-    if args.job is not None:
-        job_name = args.job
-    if job_name is not None:
-        job = job_spec.load(job_name)
+    if args.start_job is not None:
+
+        # catch SIGTERM which we're using as a cheap interprocess signal
+        signal.signal(signal.SIGTERM, sigterm_handler)
+
+        job = job_spec.load(args.start_job)
         runner = runner.JobRunner(job)
         runner.run(**vars(args))
 
-    if args.list_jobs or args.status:
+    elif args.kill_job is not None:
+
+        job = job_spec.load(args.kill_job)
+        status = runner.JobRunner(job).status()
+
+        if status is None:
+            print("No running process found for job %s." % args.kill_job)
+        elif status["status"] != "running":
+            print("Job %s (%s) is %s." % (args.kill_job, status["pid"], status["status"]))
+        else:
+            print("Killing process ID %s of job %s." % (status["pid"], args.kill_job))
+            os.kill(status["pid"], signal.SIGTERM)
+
+    elif args.list_jobs or args.status:
+
         list_jobs(verbose=args.status, only_running=args.only_running)
+
+    else:
+
+        parser.print_help()

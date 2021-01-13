@@ -128,11 +128,15 @@ class JobConfiguration(Configuration):
             defaults = {}
         Configuration.__init__(self, defaults)
 
-        with open(config_path, "r") as f:
-            self.values.update(yaml.safe_load(f))
-
-        # TODO: Catch and interpret errors.
-        self.validate_job_config()
+        try:
+            with open(config_path, "r") as f:
+                self.values.update(yaml.safe_load(f))
+        except OSError as error:
+            print("No job configuration found!\n%s" % error)
+            sys.exit(1)
+        else:
+            # TODO: Catch and interpret errors.
+            self.validate_job_config()
 
     def validate_job_config(self):
         assert "name" in self.values, "Job config invalid: missing required 'name'"

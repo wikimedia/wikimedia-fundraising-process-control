@@ -128,6 +128,13 @@ class JobRunner(object):
         # exception, we rely on process.kill() to trigger fail_exitcode(-9) in
         # the parent thread.
 
+    def terminate(self):
+        # Essentially the same as fail_timeout, but for SIGTERM handling instead.
+        self.killer_was_me = True
+        self.failure_reason = "{name} was terminated by SIGTERM".format(name=self.job.name)
+        config.log.warning("Killing subprocess due to SIGTERM")
+        self.process.kill()
+
     def status(self):
         """Check for any running instances of this job, in this process or another.
 
@@ -141,8 +148,14 @@ class JobRunner(object):
         if os.path.exists(lock_path):
             with open(lock_path, "r") as f:
                 pid = int(f.read().strip())
+                try:
+                    os.kill(pid, 0)
+                except OSError:
+                    status = "dead"
+                else:
+                    status = "running"
                 # TODO: encapsulate
-                return {"status": "running", "pid": pid}
+                return {"status": status, "pid": pid}
 
         return None
 

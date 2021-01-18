@@ -1,0 +1,30 @@
+---
+cron_template: |
+    # Generated from {source}
+    {schedule} {user} {command}
+default_job_config:
+  failmail:
+    from_address: process-control@localhost
+    to_address: pc-user@localhost
+  timeout: 10
+job_directory: /srv/jobs
+logging:
+  disable_existing_loggers: false
+  formatters:
+    runjob:
+      format: "run-job[%(process)d]: %(message)s"
+  handlers:
+    null-handler:
+      class: logging.NullHandler
+  loggers:
+    process-control:
+      handlers:
+        - null-handler
+      level: DEBUG
+  version: 1
+output_crontab: /etc/cron.d/process-control
+output_directory: /var/log/process-control
+run_directory: /var/run/process-control/run
+runner_path: /usr/local/bin/run-job
+state_directory: /var/run/process-control/state
+user: pc-user

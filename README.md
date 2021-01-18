@@ -14,7 +14,7 @@ Configuration
 
 Global configuration must be created before you can run jobs (FIXME: Make this
 work out-of-the-box).  Copy the file
-/usr/share/doc/process-control/process-control.example.yaml
+./example/process-control.example.yaml
 to /etc/process-control.yaml and customize it for your machine.
 
 You'll need to pick a service user, and create the `job_directory` and
@@ -30,14 +30,45 @@ their meaninings.
 
 Note that defaults will be taken from the global `default_job_config` section.
 
+Dev Setup (Docker)
+======
+
+Build process-control app image:
+
+    docker build -t process-control .
+
+List jobs:
+
+    docker run --rm -it process-control run-job --list-jobs
+
+Run example job and check status before/after (as pc-user):
+
+    docker run --user pc-user --rm -it process-control sh -c "run-job --status; run-job --job example_job; run-job --status"
+
+Run cron-generate and output contents (as pc-user):
+
+    docker run --user pc-user --rm -it process-control sh -c "cron-generate; cat /etc/cron.d/process-control"
+
+Run and connect to container with src mounted (as pc-user):
+
+    docker run --user pc-user --rm -it -v$(pwd):/srv/process-control process-control sh -c "pip3 install -e .; /bin/bash"
+
+Run and connect to container with jobs input dir and cron output dir mounted (as pc-user):
+
+    docker run --user pc-user --rm -it -v /local/jobs:/srv/jobs -v /local/cron-output/:/etc/cron.d/ process-control /bin/bash
+
+Note: the `--rm` flag removes containers after they've finished running.
+If you want them to stick around, remove this flag when running the above commands.
+
+
 Running
 =======
 
 Jobs can be run by name,
 
-    run-job --job cpu_marathon
+    run-job --job example_job
 
-which will look for a job configuration in `/var/lib/process-control/cpu_marathon.yaml`.
+which will look for a job configuration in `/path/to/process-control-jobs/example_job.yaml`.
 
 Other actions on jobs can be accessed like:
 

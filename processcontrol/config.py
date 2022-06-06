@@ -131,11 +131,13 @@ class JobConfiguration(Configuration):
         try:
             with open(config_path, "r") as f:
                 self.values.update(yaml.safe_load(f))
-        except OSError as error:
-            print("No job configuration found!\n%s" % error)
+        except (FileNotFoundError, PermissionError) as file_error:  # noqa: F821
+            print("Can't access %s:\n%s" % (config_path, file_error))
+            sys.exit(1)
+        except yaml.YAMLError as yaml_error:
+            print("Can't parse %s:\n%s" % (config_path, yaml_error))
             sys.exit(1)
         else:
-            # TODO: Catch and interpret errors.
             self.validate_job_config()
 
     def validate_job_config(self):

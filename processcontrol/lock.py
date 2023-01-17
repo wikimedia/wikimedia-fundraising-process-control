@@ -35,7 +35,7 @@ def begin(slug=None):
             try:
                 os.getpgid(pid)
                 raise LockError(
-                    "Aborting! Previous process ({pid}) is still alive. Remove lockfile manually if in error: {path}".format(pid=pid, path=filename),
+                    "Skipping this job run. The previous job ({pid}) is still running. Remove lockfile manually if in error: {path}".format(pid=pid, path=filename),
                     LockError.LOCK_EXISTS
                 )
             except OSError:

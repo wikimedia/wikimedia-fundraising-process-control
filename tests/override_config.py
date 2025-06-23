@@ -25,14 +25,14 @@ def start(config_path=DEFAULT_TEST_CONFIG, job_subdir=None, extra={}):
 
     OverrideConfiguration.extra = extra
 
-    global patcher
+    global patcher  # noqa: F824
     # TODO: assert unpatched
     patcher = mock.patch('processcontrol.config.GlobalConfiguration', wraps=OverrideConfiguration)
     patcher.start()
 
 
 def stop():
-    global patcher
+    global patcher  # noqa: F824
     patcher.stop()
 
 

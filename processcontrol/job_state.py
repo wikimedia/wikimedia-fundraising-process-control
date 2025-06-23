@@ -28,6 +28,7 @@ class JobState(object):
         self.path = statefile_path(slug)
         self.history = []
         self.last_completion_status = "unknown"
+        self.consecutive_failures = 0
 
     def load(self):
         try:
@@ -39,6 +40,12 @@ class JobState(object):
 
         self.history = storage["history"]
         self.last_completion_status = storage["last_completion_status"]
+        self.consecutive_failures = 0
+        for job_run in self.history:
+            if job_run["status"] == "failed":
+                self.consecutive_failures += 1
+            elif job_run["status"] == "completed":
+                self.consecutive_failures = 0
 
     def write(self):
         # TODO: Ensure that we've called load() first, so we aren't overwriting
@@ -77,6 +84,7 @@ class JobState(object):
             "time": datetime.datetime.utcnow().isoformat(" "),
         })
         self.last_completion_status = "failure"
+        self.consecutive_failures += 1
         self.write()
 
     def record_skipped(self):

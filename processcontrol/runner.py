@@ -70,8 +70,9 @@ class JobRunner(object):
                 job_history.record_skipped()
             else:
                 config.log.error(str(ex))
-                self.mailer.fail_mail(str(ex), logfile=self.logfile)
                 job_history.record_failure()
+                if job_history.consecutive_failures >= self.job.failure_threshold_for_mail:
+                    self.mailer.fail_mail(str(ex), logfile=self.logfile)
         finally:
             if self.job.timeout > 0:
                 # This becomes relevant when running multiple commands.

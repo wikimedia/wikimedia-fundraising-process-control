@@ -79,3 +79,8 @@ class Job(object):
             self.allow_overtime = self.config.get("allow_overtime")
         else:
             self.allow_overtime = False
+
+        if self.config.has("failure_threshold_for_mail"):
+            self.failure_threshold_for_mail = self.config.get("failure_threshold_for_mail")
+        else:
+            self.failure_threshold_for_mail = 1

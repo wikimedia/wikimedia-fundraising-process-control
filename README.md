@@ -93,6 +93,11 @@ log the detected issues and exit with a non-zero return code.
 * Non-zero subprocess exit code.
 * Timeout.
 
+By default, an email will be sent on each job failure. To suppress emails
+until N consecutive runs of the job have failed, add this line to the yaml:
+
+failure_threshold_for_mail: N
+
 Security
 ======
 

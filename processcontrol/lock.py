@@ -47,6 +47,10 @@ def begin(slug=None):
         with open(filename, "x") as f:
             config.log.debug("Writing lockfile.")
             f.write(str(os.getpid()))
+
+        # Set permissions to give user and group write access (0o664 = rw-rw-r--)
+        os.chmod(filename, 0o664)
+
     except FileExistsError:
         raise LockError(
             "Interrupted by a simultaneous lock before we could acquire {path}".format(path=filename),
